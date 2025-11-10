@@ -27,6 +27,8 @@ const PRINT_STATUS_MAP = {
 function Status() {
 
   const [loading, setLoading] = createSignal(true)
+  const [testPauseLoading, setTestPauseLoading] = createSignal(false)
+  const [testPauseError, setTestPauseError] = createSignal('')
   const [sensorStatus, setSensorStatus] = createSignal({
     stopped: false,
     filamentRunout: false,
@@ -77,6 +79,28 @@ function Status() {
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error)
+    }
+  }
+
+  const handleTestPause = async () => {
+    try {
+      setTestPauseLoading(true)
+      setTestPauseError('')
+
+      const response = await fetch('/test_pause', {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to send test pause: ${response.status} ${response.statusText}`)
+      }
+
+      console.log('Test pause command sent successfully')
+    } catch (err: any) {
+      setTestPauseError(`Error sending test pause: ${err.message || 'Unknown error'}`)
+      console.error('Failed to send test pause:', err)
+    } finally {
+      setTestPauseLoading(false)
     }
   }
 
