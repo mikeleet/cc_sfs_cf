@@ -4,6 +4,9 @@
 // External function to get current time (from main.cpp)
 extern unsigned long getTime();
 
+// Define the static constant
+const char* Logger::LOG_FILE_PATH = "/system_logs.txt";
+
 Logger &Logger::getInstance()
 {
   static Logger instance;
@@ -40,6 +43,10 @@ void Logger::log(const String &message)
   {
     totalEntries++;
   }
+
+  // Write to persistent log file
+  String formattedTimestamp = formatTimestamp(timestamp);
+  writeLogToFile(formattedTimestamp, message);
 }
 
 void Logger::log(const char *message)
@@ -98,4 +105,129 @@ void Logger::clearLogs()
 int Logger::getLogCount()
 {
   return totalEntries;
+}
+
+void Logger::writeLogToFile(const String &timestamp, const String &message)
+{
+  // Check if we need to rotate the log file
+  if (getLogFileSize() > MAX_LOG_FILE_SIZE)
+  {
+    rotateLogFile();
+  }
+
+  // Open log file for appending
+  File logFile = LittleFS.open(LOG_FILE_PATH, "a");
+  if (logFile)
+  {
+    // Write human-readable log entry
+    logFile.printf("[%s] %s\n", timestamp.c_str(), message.c_str());
+    logFile.close();
+  }
+}
+
+void Logger::rotateLogFile()
+{
+  // Create backup file name
+  String backupPath = String(LOG_FILE_PATH) + ".old";
+  
+  // Remove old backup if it exists
+  if (LittleFS.exists(backupPath))
+  {
+    LittleFS.remove(backupPath);
+  }
+  
+  // Rename current log to backup
+  if (LittleFS.exists(LOG_FILE_PATH))
+  {
+    LittleFS.rename(LOG_FILE_PATH, backupPath);
+  }
+}
+
+String Logger::formatTimestamp(unsigned long timestamp)
+{
+  if (timestamp == 0)
+  {
+    return "00:00:00";
+  }
+  
+  // Convert to hours, minutes, seconds
+  unsigned long hours = (timestamp / 3600) % 24;
+  unsigned long minutes = (timestamp / 60) % 60;
+  unsigned long seconds = timestamp % 60;
+  
+  char timeStr[16];
+  snprintf(timeStr, sizeof(timeStr), "%02lu:%02lu:%02lu", hours, minutes, seconds);
+  return String(timeStr);
+}
+
+size_t Logger::getLogFileSize()
+{
+  File logFile = LittleFS.open(LOG_FILE_PATH, "r");
+  if (logFile)
+  {
+    size_t size = logFile.size();
+    logFile.close();
+    return size;
+  }
+  return 0;
+}
+
+String Logger::getLogFileContents()
+{
+  String contents = "";
+  
+  // Read backup file first (older logs)
+  String backupPath = String(LOG_FILE_PATH) + ".old";
+  if (LittleFS.exists(backupPath))
+  {
+    File backupFile = LittleFS.open(backupPath, "r");
+    if (backupFile)
+    {
+      contents += "=== OLDER LOGS ===\n";
+      contents += backupFile.readString();
+      contents += "\n=== CURRENT LOGS ===\n";
+      backupFile.close();
+    }
+  }
+  
+  // Read current log file
+  File logFile = LittleFS.open(LOG_FILE_PATH, "r");
+  if (logFile)
+  {
+    contents += logFile.readString();
+    logFile.close();
+  }
+  
+  return contents;
+}
+
+void Logger::clearLogFile()
+{
+  // Remove both current and backup log files
+  if (LittleFS.exists(LOG_FILE_PATH))
+  {
+    LittleFS.remove(LOG_FILE_PATH);
+  }
+  
+  String backupPath = String(LOG_FILE_PATH) + ".old";
+  if (LittleFS.exists(backupPath))
+  {
+    LittleFS.remove(backupPath);
+  }
+}
+
+size_t Logger::getLogFileUsage()
+{
+  size_t totalSize = getLogFileSize();
+  
+  // Add backup file size
+  String backupPath = String(LOG_FILE_PATH) + ".old";
+  File backupFile = LittleFS.open(backupPath, "r");
+  if (backupFile)
+  {
+    totalSize += backupFile.size();
+    backupFile.close();
+  }
+  
+  return totalSize;
 }

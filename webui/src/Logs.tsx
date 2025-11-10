@@ -25,7 +25,7 @@ function Logs() {
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch('/logs')
+      const response = await fetch('/api/logs')
       if (!response.ok) {
         throw new Error(`Failed to fetch logs: ${response.status} ${response.statusText}`)
       }

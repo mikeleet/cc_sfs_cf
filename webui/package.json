@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node devServer.js",
-    "build": "tsc -b && vite build && rm -rf ../data/assets ../data/index.htm ../data/index.htm.gz  && cp -r dist/* ../data/ && mv ../data/index.html ../data/index.htm && find ../data -type f \\( -name '*.htm' -o -name '*.css' -o -name '*.js'  \\) -exec gzip -k {} \\;",
+    "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

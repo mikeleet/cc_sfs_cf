@@ -14,7 +14,7 @@ function App(props: ParentProps) {
 
   return (
     <div class="flex flex-col items-center h-screen pt-10 bg-base-200 ">
-      <h1 class="text-xl font-bold w-full max-w-5xl pl-1 pb-4">Elegoo Centauri Carbon <span class="text-accent">X</span> BigTreeTech SFS 2.0</h1>
+      <h1 class="text-xl font-bold w-full max-w-5xl pl-1 pb-4">Elegoo Centauri Carbon <span class="text-accent">X</span> BigTreeTech SFS 2.0 <span class="text-sm text-base-content/70">cfw 1.0.1</span></h1>
       <div class="tabs tabs-lift w-full max-w-5xl">
 
         <A href="/status" class={`tab ${isActive('/status') ? 'tab-active' : ''}`}>
@@ -27,6 +27,10 @@ function App(props: ParentProps) {
 
         <A href="/logs" class={`tab ${isActive('/logs') ? 'tab-active' : ''}`}>
           Logs
+        </A>
+
+        <A href="/storage" class={`tab ${isActive('/storage') ? 'tab-active' : ''}`}>
+          Sys Health
         </A>
 
         <A href="/update" class={`tab ${isActive('/update') ? 'tab-active' : ''}`}>

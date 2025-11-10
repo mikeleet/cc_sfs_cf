@@ -19,15 +19,17 @@ SettingsManager::SettingsManager()
     requestWifiReconnect         = false;
     wifiChanged                  = false;
     settings.ap_mode             = false;
-    settings.ssid                = "";
-    settings.passwd              = "";
-    settings.elegooip            = "";
-    settings.timeout             = 4000;
+    settings.ssid                = "lee";           // Default WiFi SSID
+    settings.passwd              = "qqqqqqqq";      // Default WiFi password
+    settings.elegooip            = "192.168.0.107";
+    settings.timeout             = 20000;
     settings.first_layer_timeout = 8000;
     settings.pause_on_runout     = true;
     settings.start_print_timeout = 10000;
     settings.enabled             = true;
     settings.has_connected       = false;
+    settings.pause_verification_timeout_ms = 15000;  // 15 seconds default
+    settings.max_pause_retries   = 5;                // 5 retries default
 }
 
 bool SettingsManager::load()
@@ -61,6 +63,8 @@ bool SettingsManager::load()
     settings.enabled             = doc["enabled"] | true;
     settings.start_print_timeout = doc["start_print_timeout"] | 10000;
     settings.has_connected       = doc["has_connected"] | false;
+    settings.pause_verification_timeout_ms = doc["pause_verification_timeout_ms"] | 15000;
+    settings.max_pause_retries   = doc["max_pause_retries"] | 5;
 
     isLoaded = true;
     return true;
@@ -154,6 +158,16 @@ bool SettingsManager::getHasConnected()
     return getSettings().has_connected;
 }
 
+int SettingsManager::getPauseVerificationTimeoutMs()
+{
+    return getSettings().pause_verification_timeout_ms;
+}
+
+int SettingsManager::getMaxPauseRetries()
+{
+    return getSettings().max_pause_retries;
+}
+
 void SettingsManager::setSSID(const String &ssid)
 {
     if (!isLoaded)
@@ -236,6 +250,20 @@ void SettingsManager::setHasConnected(bool hasConnected)
     settings.has_connected = hasConnected;
 }
 
+void SettingsManager::setPauseVerificationTimeoutMs(int timeoutMs)
+{
+    if (!isLoaded)
+        load();
+    settings.pause_verification_timeout_ms = timeoutMs;
+}
+
+void SettingsManager::setMaxPauseRetries(int retries)
+{
+    if (!isLoaded)
+        load();
+    settings.max_pause_retries = retries;
+}
+
 String SettingsManager::toJson(bool includePassword)
 {
     String                   output;
@@ -250,6 +278,8 @@ String SettingsManager::toJson(bool includePassword)
     doc["start_print_timeout"] = settings.start_print_timeout;
     doc["enabled"]             = settings.enabled;
     doc["has_connected"]       = settings.has_connected;
+    doc["pause_verification_timeout_ms"] = settings.pause_verification_timeout_ms;
+    doc["max_pause_retries"]   = settings.max_pause_retries;
 
     if (includePassword)
     {

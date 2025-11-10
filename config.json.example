@@ -1,0 +1,27 @@
+{
+  "wifi": {
+    "ssid": "your-wifi-name",
+    "password": "your-wifi-password",
+    "ap_mode": false
+  },
+  "elegoo": {
+    "ip": "192.168.1.123",
+    "timeout": 4000,
+    "first_layer_timeout": 8000,
+    "start_print_timeout": 10000
+  },
+  "device": {
+    "hostname": "ccxsfs20",
+    "mdns_name": "ccxsfs20.local"
+  },
+  "filament_sensor": {
+    "pause_on_runout": true,
+    "enabled": true,
+    "pause_verification_timeout_ms": 15000,
+    "max_pause_retries": 3
+  },
+  "build": {
+    "firmware_version": "1.0.0",
+    "chip_family": "ESP32-S3"
+  }
+}

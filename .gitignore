@@ -1,8 +1,19 @@
-data/assets/
-data/index.htm
-data/index.htm.gz
+# PlatformIO
+.pio/
+.vscode/
 
-act/artifacts/
+# Build artifacts
+webui/dist/
+webui/node_modules/
 
-website/public/manifest.json
-website/public/*.bin
+# Local configuration (copy config.json.example to config.json)
+config.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~

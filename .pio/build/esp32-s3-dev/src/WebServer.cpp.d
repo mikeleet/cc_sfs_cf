@@ -269,4 +269,5 @@
  /Users/mike/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/port/include/aes/esp_aes.h \
  /Users/mike/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/hal/include/hal/aes_types.h \
  /Users/mike/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/mbedtls/mbedtls/include/mbedtls/error.h \
- .pio/libdeps/esp32-s3-dev/UUID/UUID.h src/Logger.h
+ .pio/libdeps/esp32-s3-dev/UUID/UUID.h src/Logger.h src/EmbeddedWebUI.h \
+ src/TimeSeriesData.h

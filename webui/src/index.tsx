@@ -6,6 +6,7 @@ import App from './App.tsx'
 import Settings from './Settings'
 import Status from './Status'
 import Logs from './Logs'
+import SystemHealth from './SystemHealth'
 import Update from './Update'
 import About from './About'
 
@@ -17,6 +18,7 @@ render(() => (
     <Route path="/status" component={Status} />
     <Route path="/settings" component={Settings} />
     <Route path="/logs" component={Logs} />
+    <Route path="/storage" component={SystemHealth} />
     <Route path="/update" component={Update} />
     <Route path="/about" component={About} />
   </Router>

@@ -1,0 +1,440 @@
+./build_and_upload.sh
+🚀 ESP32 Build and Upload Script
+=================================
+
+Step 1: Force Device Disconnect/Reconnect
+Attempting to reset USB connection...
+✅ Found ESP32 device: /dev/cu.wchusbserial5AF70919991
+Resetting device...
+✅ Device reset completed
+
+Step 2: Building WebUI
+Building WebUI...
+
+> web@0.0.0 build
+> tsc -b && vite build
+
+vite v6.2.1 building for production...
+transforming (5) node_modules/@solidjs/router/dist/index.jsx/*! 🌼 daisyUI 5.0.43 */
+✓ 33 modules transformed.
+dist/index.html                  0.41 kB │ gzip:  0.29 kB
+dist/assets/index-CLCJ3axA.css  55.62 kB │ gzip:  9.71 kB
+dist/assets/index-By9Za3xk.js   71.76 kB │ gzip: 22.97 kB
+✓ built in 502ms
+✅ WebUI build completed
+
+Step 2.5: Generating Embedded WebUI
+Generating embedded WebUI assets...
+==================================================
+Generating Embedded WebUI...
+==================================================
+  📦 Embedding index.html...
+  📦 Embedding assets/index-CLCJ3axA.css...
+  📦 Embedding assets/index-By9Za3xk.js...
+✅ Generated /Users/mike/Documents/GitHub/non_sn/cc_sfs_cf/src/EmbeddedWebUI.h with 3 embedded files
+==================================================
+✅ Embedded WebUI generation completed
+
+Step 3: Building and Uploading Firmware
+Cleaning previous build...
+Processing esp32-s3-dev (board: esp32-s3-devkitc-1; platform: espressif32; framework: arduino)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+Removing .pio/build/esp32-s3-dev
+Done cleaning
+============================================================================================== [SUCCESS] Took 0.25 seconds ==============================================================================================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32-s3-dev   SUCCESS   00:00:00.254
+============================================================================================== 1 succeeded in 00:00:00.254 ==============================================================================================
+Building firmware (this will embed the WebUI)...
+Processing esp32-s3-dev (board: esp32-s3-devkitc-1; platform: espressif32; framework: arduino)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.12.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 2.40900.250804 (4.9.0) 
+ - tool-openocd-esp32 @ 2.1100.20220706 (11.0) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 41 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- AsyncTCP @ 3.3.7
+|-- ElegantOTA @ 3.1.7
+|-- ArduinoJson @ 6.19.4
+|-- ESPAsyncWebServer @ 3.7.3
+|-- WebSockets @ 2.7.1
+|-- UUID @ 0.2.0
+|-- LittleFS @ 2.0.0
+|-- ESPmDNS @ 2.0.0
+|-- WiFi @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32-s3-dev/src/ElegooCC.cpp.o
+Compiling .pio/build/esp32-s3-dev/src/Logger.cpp.o
+Compiling .pio/build/esp32-s3-dev/src/SettingsManager.cpp.o
+Compiling .pio/build/esp32-s3-dev/src/TimeSeriesData.cpp.o
+Compiling .pio/build/esp32-s3-dev/src/WebServer.cpp.o
+Compiling .pio/build/esp32-s3-dev/src/improv.cpp.o
+Compiling .pio/build/esp32-s3-dev/src/main.cpp.o
+Building .pio/build/esp32-s3-dev/bootloader.bin
+Generating partitions .pio/build/esp32-s3-dev/partitions.bin
+esptool.py v4.9.0
+Creating esp32s3 image...
+Merged 1 ELF section
+Successfully created esp32s3 image.
+Compiling .pio/build/esp32-s3-dev/lib460/AsyncTCP@3.3.7/AsyncTCP.cpp.o
+Compiling .pio/build/esp32-s3-dev/liba8e/FS/FS.cpp.o
+Compiling .pio/build/esp32-s3-dev/liba8e/FS/vfs_api.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFi.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiAP.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiClient.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiGeneric.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiMulti.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiSTA.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiScan.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiServer.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib84a/WiFi/WiFiUdp.cpp.o
+Archiving .pio/build/esp32-s3-dev/liba8e/libFS.a
+Archiving .pio/build/esp32-s3-dev/lib460/libAsyncTCP@3.3.7.a
+Indexing .pio/build/esp32-s3-dev/liba8e/libFS.a
+Indexing .pio/build/esp32-s3-dev/lib460/libAsyncTCP@3.3.7.a
+Compiling .pio/build/esp32-s3-dev/lib06f/WebServer/Parsing.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib06f/WebServer/WebServer.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib06f/WebServer/detail/mimetable.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/AsyncEventSource.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/AsyncJson.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/AsyncMessagePack.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/AsyncWebHeader.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/AsyncWebSocket.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/BackPort_SHA1Builder.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/ChunkPrint.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/Middleware.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib84a/libWiFi.a
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/WebAuthentication.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/WebHandlers.cpp.o
+Indexing .pio/build/esp32-s3-dev/lib84a/libWiFi.a
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/WebRequest.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/WebResponses.cpp.o
+Compiling .pio/build/esp32-s3-dev/libc77/ESPAsyncWebServer@3.7.3/WebServer.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib798/LittleFS/LittleFS.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib06f/libWebServer.a
+Indexing .pio/build/esp32-s3-dev/lib06f/libWebServer.a
+Compiling .pio/build/esp32-s3-dev/lib680/Update/HttpsOTAUpdate.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib680/Update/Updater.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib3b4/ElegantOTA/ElegantOTA.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib3b4/ElegantOTA/elop.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib201/Ethernet/ETH.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib798/libLittleFS.a
+Indexing .pio/build/esp32-s3-dev/lib798/libLittleFS.a
+Compiling .pio/build/esp32-s3-dev/lib5e5/SPI/SPI.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib94a/WiFiClientSecure/WiFiClientSecure.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib94a/WiFiClientSecure/esp_crt_bundle.c.o
+Compiling .pio/build/esp32-s3-dev/lib94a/WiFiClientSecure/ssl_client.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/SocketIOclient.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib680/libUpdate.a
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/WebSockets.cpp.o
+Indexing .pio/build/esp32-s3-dev/lib680/libUpdate.a
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/WebSocketsClient.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/WebSocketsServer.cpp.o
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/libb64/cdecode.c.o
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/libb64/cencode.c.o
+Compiling .pio/build/esp32-s3-dev/lib987/WebSockets/libsha1/libsha1.c.o
+Archiving .pio/build/esp32-s3-dev/libc77/libESPAsyncWebServer@3.7.3.a
+Indexing .pio/build/esp32-s3-dev/libc77/libESPAsyncWebServer@3.7.3.a
+Compiling .pio/build/esp32-s3-dev/lib8aa/UUID/UUID.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib201/libEthernet.a
+Archiving .pio/build/esp32-s3-dev/lib5e5/libSPI.a
+Indexing .pio/build/esp32-s3-dev/lib201/libEthernet.a
+Indexing .pio/build/esp32-s3-dev/lib5e5/libSPI.a
+Compiling .pio/build/esp32-s3-dev/libb91/ESPmDNS/ESPmDNS.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib3b4/libElegantOTA.a
+Indexing .pio/build/esp32-s3-dev/lib3b4/libElegantOTA.a
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/Esp.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/FirmwareMSC.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/FunctionalInterrupt.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/HWCDC.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/HardwareSerial.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/IPAddress.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/IPv6Address.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib94a/libWiFiClientSecure.a
+Indexing .pio/build/esp32-s3-dev/lib94a/libWiFiClientSecure.a
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/MD5Builder.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/Print.cpp.o
+Archiving .pio/build/esp32-s3-dev/lib8aa/libUUID.a
+Indexing .pio/build/esp32-s3-dev/lib8aa/libUUID.a
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/Stream.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/StreamString.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/Tone.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/USB.cpp.o
+Archiving .pio/build/esp32-s3-dev/libb91/libESPmDNS.a
+Archiving .pio/build/esp32-s3-dev/lib987/libWebSockets.a
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/USBCDC.cpp.o
+Indexing .pio/build/esp32-s3-dev/libb91/libESPmDNS.a
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/USBMSC.cpp.o
+Indexing .pio/build/esp32-s3-dev/lib987/libWebSockets.a
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/WMath.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/WString.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/base64.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/cbuf.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-adc.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-bt.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-cpu.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-dac.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-gpio.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-i2c-slave.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-i2c.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-ledc.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-matrix.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-misc.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-psram.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-rgb-led.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-rmt.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-sigmadelta.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-spi.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-time.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-timer.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-tinyusb.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-touch.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/esp32-hal-uart.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/firmware_msc_fat.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/libb64/cdecode.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/libb64/cencode.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/main.cpp.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/stdlib_noniso.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/wiring_pulse.c.o
+Compiling .pio/build/esp32-s3-dev/FrameworkArduino/wiring_shift.c.o
+Archiving .pio/build/esp32-s3-dev/libFrameworkArduino.a
+Indexing .pio/build/esp32-s3-dev/libFrameworkArduino.a
+Linking .pio/build/esp32-s3-dev/firmware.elf
+Retrieving maximum program size .pio/build/esp32-s3-dev/firmware.elf
+Checking size .pio/build/esp32-s3-dev/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  15.5% (used 50828 bytes from 327680 bytes)
+Flash: [===       ]  33.0% (used 1104057 bytes from 3342336 bytes)
+Building .pio/build/esp32-s3-dev/firmware.bin
+esptool.py v4.9.0
+Creating esp32s3 image...
+Merged 2 ELF sections
+Successfully created esp32s3 image.
+build_and_embed_webui(["buildprog"], [".pio/build/esp32-s3-dev/firmware.bin"])
+==================================================
+Building and embedding WebUI...
+==================================================
+✅ Loaded configuration from /Users/mike/Documents/GitHub/non_sn/cc_sfs_cf/config.json
+✅ Updated SettingsManager.cpp with config values
+Step 1: Building WebUI...
+✅ WebUI build completed successfully
+Step 2: Embedding WebUI files...
+  📦 Embedding index.html...
+  📦 Embedding assets/index-CLCJ3axA.css...
+  📦 Embedding assets/index-By9Za3xk.js...
+✅ Generated /Users/mike/Documents/GitHub/non_sn/cc_sfs_cf/src/EmbeddedWebUI.h with 3 embedded files
+==================================================
+============================================================================================= [SUCCESS] Took 11.64 seconds =============================================================================================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32-s3-dev   SUCCESS   00:00:11.642
+============================================================================================== 1 succeeded in 00:00:11.642 ==============================================================================================
+✅ Firmware build completed
+Performing complete flash erase (this will delete all settings)...
+Processing esp32-s3-dev (board: esp32-s3-devkitc-1; platform: espressif32; framework: arduino)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.12.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 2.40900.250804 (4.9.0) 
+ - tool-openocd-esp32 @ 2.1100.20220706 (11.0) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 41 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- AsyncTCP @ 3.3.7
+|-- ElegantOTA @ 3.1.7
+|-- ArduinoJson @ 6.19.4
+|-- ESPAsyncWebServer @ 3.7.3
+|-- WebSockets @ 2.7.1
+|-- UUID @ 0.2.0
+|-- LittleFS @ 2.0.0
+|-- ESPmDNS @ 2.0.0
+|-- WiFi @ 2.0.0
+Building in release mode
+Looking for serial port...
+Auto-detected: /dev/cu.wchusbserial5AF70919991
+Erasing...
+esptool.py v4.9.0
+Serial port /dev/cu.wchusbserial5AF70919991
+Connecting....
+Chip is ESP32-S3 (QFN56) (revision v0.2)
+Features: WiFi, BLE, Embedded PSRAM 8MB (AP_3v3)
+Crystal is 40MHz
+MAC: dc:b4:d9:05:cb:0c
+Uploading stub...
+Running stub...
+Stub running...
+Erasing flash (this may take a while)...
+Chip erase completed successfully in 7.9 seconds.
+Hard resetting via RTS pin...
+============================================================================================= [SUCCESS] Took 12.16 seconds =============================================================================================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32-s3-dev   SUCCESS   00:00:12.165
+============================================================================================== 1 succeeded in 00:00:12.165 ==============================================================================================
+✅ Flash erase completed
+Uploading firmware to device...
+Processing esp32-s3-dev (board: esp32-s3-devkitc-1; platform: espressif32; framework: arduino)
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Verbose mode can be enabled via `-v, --verbose` option
+CONFIGURATION: https://docs.platformio.org/page/boards/espressif32/esp32-s3-devkitc-1.html
+PLATFORM: Espressif 32 (6.12.0) > Espressif ESP32-S3-DevKitC-1-N8 (8 MB QD, No PSRAM)
+HARDWARE: ESP32S3 240MHz, 320KB RAM, 8MB Flash
+DEBUG: Current (esp-builtin) On-board (esp-builtin) External (cmsis-dap, esp-bridge, esp-prog, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa)
+PACKAGES: 
+ - framework-arduinoespressif32 @ 3.20017.241212+sha.dcc1105b 
+ - tool-esptoolpy @ 2.40900.250804 (4.9.0) 
+ - tool-mkfatfs @ 2.0.1 
+ - tool-mklittlefs @ 1.203.210628 (2.3) 
+ - tool-mkspiffs @ 2.230.0 (2.30) 
+ - tool-openocd-esp32 @ 2.1100.20220706 (11.0) 
+ - toolchain-riscv32-esp @ 8.4.0+2021r2-patch5 
+ - toolchain-xtensa-esp32s3 @ 8.4.0+2021r2-patch5
+LDF: Library Dependency Finder -> https://bit.ly/configure-pio-ldf
+LDF Modes: Finder ~ chain, Compatibility ~ soft
+Found 41 compatible libraries
+Scanning dependencies...
+Dependency Graph
+|-- AsyncTCP @ 3.3.7
+|-- ElegantOTA @ 3.1.7
+|-- ArduinoJson @ 6.19.4
+|-- ESPAsyncWebServer @ 3.7.3
+|-- WebSockets @ 2.7.1
+|-- UUID @ 0.2.0
+|-- LittleFS @ 2.0.0
+|-- ESPmDNS @ 2.0.0
+|-- WiFi @ 2.0.0
+Building in release mode
+Compiling .pio/build/esp32-s3-dev/src/WebServer.cpp.o
+Linking .pio/build/esp32-s3-dev/firmware.elf
+Retrieving maximum program size .pio/build/esp32-s3-dev/firmware.elf
+Checking size .pio/build/esp32-s3-dev/firmware.elf
+Advanced Memory Usage is available via "PlatformIO Home > Project Inspect"
+RAM:   [==        ]  15.5% (used 50828 bytes from 327680 bytes)
+Flash: [===       ]  33.0% (used 1104057 bytes from 3342336 bytes)
+Building .pio/build/esp32-s3-dev/firmware.bin
+esptool.py v4.9.0
+Creating esp32s3 image...
+Merged 2 ELF sections
+Successfully created esp32s3 image.
+Configuring upload protocol...
+AVAILABLE: cmsis-dap, esp-bridge, esp-builtin, esp-prog, espota, esptool, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa
+CURRENT: upload_protocol = esptool
+Looking for upload port...
+Auto-detected: /dev/cu.wchusbserial5AF70919991
+Uploading .pio/build/esp32-s3-dev/firmware.bin
+esptool.py v4.9.0
+Serial port /dev/cu.wchusbserial5AF70919991
+Connecting....
+Chip is ESP32-S3 (QFN56) (revision v0.2)
+Features: WiFi, BLE, Embedded PSRAM 8MB (AP_3v3)
+Crystal is 40MHz
+MAC: dc:b4:d9:05:cb:0c
+Uploading stub...
+Running stub...
+Stub running...
+Changing baud rate to 460800
+Changed.
+Configuring flash size...
+Flash will be erased from 0x00000000 to 0x00003fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x0000e000 to 0x0000ffff...
+Flash will be erased from 0x00010000 to 0x0011dfff...
+SHA digest in image updated
+Compressed 15104 bytes to 10430...
+Writing at 0x00000000... (100 %)
+Wrote 15104 bytes (10430 compressed) at 0x00000000 in 0.3 seconds (effective 374.7 kbit/s)...
+Hash of data verified.
+Compressed 3072 bytes to 146...
+Writing at 0x00008000... (100 %)
+Wrote 3072 bytes (146 compressed) at 0x00008000 in 0.0 seconds (effective 1601.8 kbit/s)...
+Hash of data verified.
+Compressed 8192 bytes to 47...
+Writing at 0x0000e000... (100 %)
+Wrote 8192 bytes (47 compressed) at 0x0000e000 in 0.0 seconds (effective 2608.9 kbit/s)...
+Hash of data verified.
+Compressed 1104416 bytes to 727743...
+Writing at 0x00010000... (2 %)
+Writing at 0x000158fc... (4 %)
+Writing at 0x000198d2... (6 %)
+Writing at 0x0001ea2c... (8 %)
+Writing at 0x00029379... (11 %)
+Writing at 0x00034f44... (13 %)
+Writing at 0x0003ece1... (15 %)
+Writing at 0x0004fac0... (17 %)
+Writing at 0x000557d2... (20 %)
+Writing at 0x0005c0a5... (22 %)
+Writing at 0x00061ea7... (24 %)
+Writing at 0x00067cf3... (26 %)
+Writing at 0x0006da6b... (28 %)
+Writing at 0x00072ef0... (31 %)
+Writing at 0x00078785... (33 %)
+Writing at 0x0007d77d... (35 %)
+Writing at 0x000827a8... (37 %)
+Writing at 0x000877ae... (40 %)
+Writing at 0x0008c783... (42 %)
+Writing at 0x00091720... (44 %)
+Writing at 0x000969ec... (46 %)
+Writing at 0x0009ba53... (48 %)
+Writing at 0x000a07e5... (51 %)
+Writing at 0x000a590a... (53 %)
+Writing at 0x000aa868... (55 %)
+Writing at 0x000af5e1... (57 %)
+Writing at 0x000b4908... (60 %)
+Writing at 0x000ba3dc... (62 %)
+Writing at 0x000bf5fc... (64 %)
+Writing at 0x000c4898... (66 %)
+Writing at 0x000c9718... (68 %)
+Writing at 0x000ce7b7... (71 %)
+Writing at 0x000d38a6... (73 %)
+Writing at 0x000d8b6a... (75 %)
+Writing at 0x000de085... (77 %)
+Writing at 0x000e3dd8... (80 %)
+Writing at 0x000e941a... (82 %)
+Writing at 0x000eee65... (84 %)
+Writing at 0x000f4581... (86 %)
+Writing at 0x000fbf5f... (88 %)
+Writing at 0x00102f37... (91 %)
+Writing at 0x0010aca1... (93 %)
+Writing at 0x0010fe05... (95 %)
+Writing at 0x0011584b... (97 %)
+Writing at 0x0011b33e... (100 %)
+Wrote 1104416 bytes (727743 compressed) at 0x00010000 in 16.3 seconds (effective 542.0 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...
+============================================================================================= [SUCCESS] Took 26.73 seconds =============================================================================================
+
+Environment    Status    Duration
+-------------  --------  ------------
+esp32-s3-dev   SUCCESS   00:00:26.729
+============================================================================================== 1 succeeded in 00:00:26.729 ==============================================================================================
+✅ Firmware upload completed
+
+Step 4: Device Status
+Waiting for device to boot...

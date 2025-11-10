@@ -9,6 +9,7 @@
 #include "WebServer.h"
 #include "improv.h"
 #include "time.h"
+#include "TimeSeriesData.h"
 
 #define SPIFFS LittleFS
 
@@ -49,9 +50,56 @@ bool isElegooSetup    = false;
 bool isWebServerSetup = false;
 bool isNtpSetup       = false;
 
+// Uptime tracking (starts after NTP sync)
+unsigned long uptimeStartMillis = 0;
+bool uptimeStarted = false;
+
+// Timeseries data storage (150KB each)
+TimeSeriesData* movementData = nullptr;
+TimeSeriesData* runoutData = nullptr;
+TimeSeriesData* connectionData = nullptr;
+
+// Forward declaration
+unsigned long getTime();
+
 // Used by improv-wifi to parse serial data
 uint8_t x_buffer[16];
 uint8_t x_position = 0;
+
+// Function to get uptime in seconds since NTP sync
+unsigned long getUptimeSeconds() {
+    if (!uptimeStarted) {
+        return 0;
+    }
+    return (millis() - uptimeStartMillis) / 1000;
+}
+
+// Function to format uptime in human readable format
+String getUptimeFormatted() {
+    if (!uptimeStarted) {
+        return "Not started (waiting for NTP sync)";
+    }
+    
+    unsigned long uptimeSeconds = getUptimeSeconds();
+    unsigned long days = uptimeSeconds / 86400;
+    unsigned long hours = (uptimeSeconds % 86400) / 3600;
+    unsigned long minutes = (uptimeSeconds % 3600) / 60;
+    unsigned long seconds = uptimeSeconds % 60;
+    
+    String result = "";
+    if (days > 0) {
+        result += String(days) + "d ";
+    }
+    if (hours > 0 || days > 0) {
+        result += String(hours) + "h ";
+    }
+    if (minutes > 0 || hours > 0 || days > 0) {
+        result += String(minutes) + "m ";
+    }
+    result += String(seconds) + "s";
+    
+    return result;
+}
 
 // Variables to track NTP synchronization
 unsigned long lastNTPSyncAttempt = 0;
@@ -252,12 +300,32 @@ void setup()
     logger.logf("Firmware version: %s", firmwareVersion);
     logger.logf("Chip family: %s", chipFamily);
 
-    SPIFFS.begin();  // note: this must be done before wifi/server setup
-    logger.log("Filesystem initialized");
+    // Initialize LittleFS with auto-format if corrupted
+    if (!SPIFFS.begin(true)) {  // true = format if mount fails
+        logger.log("LittleFS mount failed, formatting...");
+        if (SPIFFS.format()) {
+            logger.log("LittleFS formatted successfully");
+            if (SPIFFS.begin()) {
+                logger.log("LittleFS mounted after format");
+            } else {
+                logger.log("LittleFS mount failed even after format!");
+            }
+        } else {
+            logger.log("LittleFS format failed!");
+        }
+    } else {
+        logger.log("LittleFS mounted successfully");
+    }
 
     // Load settings early
     settingsManager.load();
     logger.log("Settings Manager Loaded");
+    
+    // Initialize timeseries data storage
+    movementData = new TimeSeriesData("/movement_data.json");
+    runoutData = new TimeSeriesData("/runout_data.json");
+    connectionData = new TimeSeriesData("/connection_data.json");
+    logger.log("Timeseries data storage initialized");
 }
 
 void syncTimeWithNTP(unsigned long currentTime)
@@ -460,6 +528,26 @@ void loop()
             isElegooSetup = true;
         }
         elegooCC.loop();
+        
+        // Collect timeseries data every 2 seconds
+        static unsigned long lastDataCollection = 0;
+        if (currentTime - lastDataCollection >= 2000) {
+            lastDataCollection = currentTime;
+            
+            if (movementData && runoutData && connectionData) {
+                printer_info_t info = elegooCC.getCurrentInformation();
+                
+                // Movement detection (1 = movement detected, 0 = no movement)
+                bool movementDetected = digitalRead(MOVEMENT_SENSOR_PIN) == LOW;
+                movementData->addDataPoint(movementDetected ? 1.0 : 0.0);
+                
+                // Runout detection (1 = runout detected, 0 = filament present)
+                runoutData->addDataPoint(info.filamentRunout ? 1.0 : 0.0);
+                
+                // Connection status (1 = connected, 0 = disconnected)
+                connectionData->addDataPoint(info.isWebsocketConnected ? 1.0 : 0.0);
+            }
+        }
 
         if (!isNtpSetup)
         {
@@ -467,6 +555,13 @@ void loop()
             syncTimeWithNTP(currentTime);
             logger.log("NTP setup complete");
             isNtpSetup = true;
+            
+            // Start uptime tracking after NTP sync
+            if (!uptimeStarted) {
+                uptimeStartMillis = millis();
+                uptimeStarted = true;
+                logger.log("Uptime tracking started");
+            }
         }
         else if (currentTime - lastNTPSyncAttempt >= NTP_SYNC_INTERVAL)
         {

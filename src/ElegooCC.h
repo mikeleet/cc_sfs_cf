@@ -130,8 +130,6 @@ class ElegooCC
     bool          pauseCommandSent;
     unsigned long pauseCommandSentTime;
     int           pauseRetryCount;
-    static const int MAX_PAUSE_RETRIES = 3;
-    static const unsigned long PAUSE_VERIFICATION_TIMEOUT_MS = 15000;
 
     ElegooCC();
 

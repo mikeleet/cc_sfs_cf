@@ -13,6 +13,8 @@ function Settings() {
   const [apMode, setApMode] = createSignal<boolean | null>(null);
   const [pauseOnRunout, setPauseOnRunout] = createSignal(true);
   const [enabled, setEnabled] = createSignal(true);
+  const [pauseVerificationTimeout, setPauseVerificationTimeout] = createSignal(15000);
+  const [maxPauseRetries, setMaxPauseRetries] = createSignal(3);
   // Load settings from the server and scan for WiFi networks
   onMount(async () => {
     try {
@@ -35,6 +37,8 @@ function Settings() {
       setApMode(settings.ap_mode || null)
       setPauseOnRunout(settings.pause_on_runout !== undefined ? settings.pause_on_runout : true)
       setEnabled(settings.enabled !== undefined ? settings.enabled : true)
+      setPauseVerificationTimeout(settings.pause_verification_timeout_ms || 15000)
+      setMaxPauseRetries(settings.max_pause_retries || 0)
 
       setError('')
     } catch (err: any) {
@@ -61,6 +65,8 @@ function Settings() {
         pause_on_runout: pauseOnRunout(),
         start_print_timeout: startPrintTimeout(),
         enabled: enabled(),
+        pause_verification_timeout_ms: pauseVerificationTimeout(),
+        max_pause_retries: maxPauseRetries(),
       }
 
       const response = await fetch('/update_settings', {
@@ -74,6 +80,20 @@ function Settings() {
       if (!response.ok) {
         throw new Error(`Failed to save settings: ${response.status} ${response.statusText}`)
       }
+
+      // Log all saved settings for verification
+      console.log('Settings saved successfully:', {
+        ssid: settings.ssid,
+        elegooip: settings.elegooip,
+        timeout: settings.timeout,
+        first_layer_timeout: settings.first_layer_timeout,
+        start_print_timeout: settings.start_print_timeout,
+        pause_on_runout: settings.pause_on_runout,
+        enabled: settings.enabled,
+        pause_verification_timeout_ms: settings.pause_verification_timeout_ms,
+        max_pause_retries: settings.max_pause_retries,
+        ap_mode: settings.ap_mode
+      })
 
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
@@ -167,13 +187,13 @@ function Settings() {
               type="number"
               id="timeout"
               value={timeout()}
-              onInput={(e) => setTimeoutValue(parseInt(e.target.value) || 5000)}
+              onInput={(e) => setTimeoutValue(parseInt(e.target.value) || timeout())}
               min="100"
               max="30000"
               step="100"
               class="input"
             />
-            <p class="label">Value in milliseconds between reading from the movement sensor</p>
+            <p class="label">Value in milliseconds between reading from the movement sensor ({(timeout() / 1000).toFixed(1)}s)</p>
           </fieldset>
 
           <fieldset class="fieldset">
@@ -182,13 +202,13 @@ function Settings() {
               type="number"
               id="firstLayerTimeout"
               value={firstLayerTimeout()}
-              onInput={(e) => setFirstLayerTimeout(parseInt(e.target.value) || 4000)}
+              onInput={(e) => setFirstLayerTimeout(parseInt(e.target.value) || firstLayerTimeout())}
               min="100"
               max="60000"
               step="100"
               class="input"
             />
-            <p class="label">Timeout in milliseconds for first layer</p>
+            <p class="label">Timeout in milliseconds for first layer ({(firstLayerTimeout() / 1000).toFixed(1)}s)</p>
           </fieldset>
 
           <fieldset class="fieldset">
@@ -197,13 +217,13 @@ function Settings() {
               type="number"
               id="startPrintTimeout"
               value={startPrintTimeout()}
-              onInput={(e) => setStartPrintTimeout(parseInt(e.target.value) || 10000)}
+              onInput={(e) => setStartPrintTimeout(parseInt(e.target.value) || startPrintTimeout())}
               min="1000"
               max="60000"
               step="1000"
               class="input"
             />
-            <p class="label">Time in milliseconds to wait after print starts before allowing pause on filament runout</p>
+            <p class="label">Time in milliseconds to wait after print starts before allowing pause on filament runout ({(startPrintTimeout() / 1000).toFixed(1)}s)</p>
           </fieldset>
 
           <fieldset class="fieldset">
@@ -234,6 +254,38 @@ function Settings() {
               <span class="label-text">When unchecked, it will completely disable pausing, useful for prints with ironing</span>
 
             </label>
+          </fieldset>
+
+          <h2 class="text-lg font-bold mb-4 mt-10">Pause Verification Settings</h2>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Pause Verification Timeout</legend>
+            <input
+              type="number"
+              id="pauseVerificationTimeout"
+              value={pauseVerificationTimeout()}
+              onInput={(e) => setPauseVerificationTimeout(parseInt(e.target.value) || pauseVerificationTimeout())}
+              min="5000"
+              max="60000"
+              step="1000"
+              class="input"
+            />
+            <p class="label">Time in milliseconds to wait for pause verification before retry ({(pauseVerificationTimeout() / 1000).toFixed(1)}s)</p>
+          </fieldset>
+
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend">Maximum Pause Retries</legend>
+            <input
+              type="number"
+              id="maxPauseRetries"
+              value={maxPauseRetries()}
+              onInput={(e) => setMaxPauseRetries(parseInt(e.target.value) || maxPauseRetries())}
+              min="1"
+              max="10"
+              step="1"
+              class="input"
+            />
+            <p class="label">Number of times to retry pause command if verification fails</p>
           </fieldset>
 
           <button

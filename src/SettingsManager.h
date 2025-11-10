@@ -16,6 +16,8 @@ struct user_settings
     int    start_print_timeout;
     bool   enabled;
     bool   has_connected;
+    int    pause_verification_timeout_ms;
+    int    max_pause_retries;
 };
 
 class SettingsManager
@@ -52,6 +54,8 @@ class SettingsManager
     int    getStartPrintTimeout();
     bool   getEnabled();
     bool   getHasConnected();
+    int    getPauseVerificationTimeoutMs();
+    int    getMaxPauseRetries();
 
     void setSSID(const String &ssid);
     void setPassword(const String &password);
@@ -63,6 +67,8 @@ class SettingsManager
     void setStartPrintTimeout(int timeoutMs);
     void setEnabled(bool enabled);
     void setHasConnected(bool hasConnected);
+    void setPauseVerificationTimeoutMs(int timeoutMs);
+    void setMaxPauseRetries(int retries);
 
     String toJson(bool includePassword = true);
 };

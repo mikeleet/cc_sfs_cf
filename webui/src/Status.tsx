@@ -1,4 +1,5 @@
 import { createSignal, onMount, onCleanup } from 'solid-js'
+import TimeSeriesChart from './TimeSeriesChart'
 
 
 
@@ -40,7 +41,24 @@ function Status() {
       totalTicks: 0,
       PrintSpeedPct: 0,
       isWebsocketConnected: false,
+    },
+    uptime: {
+      seconds: 0,
+      formatted: 'Not started'
     }
+  })
+  
+  const [settings, setSettings] = createSignal({
+    ssid: '',
+    elegooip: '',
+    timeout: 0,
+    first_layer_timeout: 0,
+    start_print_timeout: 0,
+    pause_on_runout: false,
+    enabled: false,
+    pause_verification_timeout_ms: 0,
+    max_pause_retries: 0,
+    ap_mode: false
   })
 
   const refreshSensorStatus = async () => {
@@ -50,13 +68,28 @@ function Status() {
     setLoading(false)
   }
 
+  const refreshSettings = async () => {
+    try {
+      const response = await fetch('/get_settings')
+      if (response.ok) {
+        const data = await response.json()
+        setSettings(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+    }
+  }
+
   onMount(async () => {
     setLoading(true)
-    await refreshSensorStatus()
+    await Promise.all([refreshSensorStatus(), refreshSettings()])
     const intervalId = setInterval(refreshSensorStatus, 2500)
+    // Refresh settings less frequently
+    const settingsIntervalId = setInterval(refreshSettings, 10000)
 
     onCleanup(() => {
       clearInterval(intervalId)
+      clearInterval(settingsIntervalId)
     })
   })
 
@@ -81,6 +114,11 @@ function Status() {
             <div class="stat">
               <div class="stat-title">Printer Connected</div>
               <div class={`stat-value ${sensorStatus().elegoo.isWebsocketConnected ? 'text-success' : 'text-error'}`}> {sensorStatus().elegoo.isWebsocketConnected ? 'Yes' : 'No'}</div>
+            </div>
+            <div class="stat">
+              <div class="stat-title">Device Uptime</div>
+              <div class="stat-value text-info text-lg">{sensorStatus().uptime?.formatted || 'Not started'}</div>
+              <div class="stat-desc">Since NTP sync</div>
             </div>
           </div>
           <div class="card w-full mt-8 bg-base-200 card-sm shadow-sm">
@@ -123,6 +161,108 @@ function Status() {
                 <div>
                   <h3 class="font-bold">Print Speed</h3>
                   <p>{sensorStatus().elegoo.PrintSpeedPct}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Timeseries Charts */}
+          <div class="mt-8 space-y-6">
+            <h2 class="text-2xl font-bold text-center mb-6">📊 Historical Data</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TimeSeriesChart
+                title="🔄 Movement Detection"
+                endpoint="/api/timeseries/movement"
+                color="#10b981"
+                yLabel="Movement"
+              />
+              
+              <TimeSeriesChart
+                title="⚠️ Filament Runout"
+                endpoint="/api/timeseries/runout"
+                color="#f59e0b"
+                yLabel="Runout Status"
+              />
+            </div>
+            
+            <div class="flex justify-center">
+              <div class="w-full lg:w-1/2">
+                <TimeSeriesChart
+                  title="🔗 Printer Connection"
+                  endpoint="/api/timeseries/connection"
+                  color="#3b82f6"
+                  yLabel="Connected"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Current Settings Display */}
+          <div class="mt-8">
+            <h2 class="text-2xl font-bold text-center mb-6">⚙️ Current System Settings</h2>
+            <div class="card w-full bg-base-200 shadow-sm">
+              <div class="card-body">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                  
+                  {/* Network Settings */}
+                  <div class="space-y-2">
+                    <h3 class="font-bold text-primary">📡 Network</h3>
+                    <div>
+                      <span class="font-semibold">WiFi SSID:</span>
+                      <p class="text-accent">{settings().ssid || 'Not set'}</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">Elegoo IP:</span>
+                      <p class="text-accent">{settings().elegooip || 'Not set'}</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">AP Mode:</span>
+                      <p class="text-accent">{settings().ap_mode ? 'Enabled' : 'Disabled'}</p>
+                    </div>
+                  </div>
+
+                  {/* Timeout Settings */}
+                  <div class="space-y-2">
+                    <h3 class="font-bold text-primary">⏱️ Timeouts</h3>
+                    <div>
+                      <span class="font-semibold">Movement Sensor:</span>
+                      <p class="text-accent">{settings().timeout}ms ({(settings().timeout / 1000).toFixed(1)}s)</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">First Layer:</span>
+                      <p class="text-accent">{settings().first_layer_timeout}ms ({(settings().first_layer_timeout / 1000).toFixed(1)}s)</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">Start Print:</span>
+                      <p class="text-accent">{settings().start_print_timeout}ms ({(settings().start_print_timeout / 1000).toFixed(1)}s)</p>
+                    </div>
+                  </div>
+
+                  {/* Sensor & Pause Settings */}
+                  <div class="space-y-2">
+                    <h3 class="font-bold text-primary">🔧 Sensor & Pause</h3>
+                    <div>
+                      <span class="font-semibold">Pause on Runout:</span>
+                      <p class="text-accent">{settings().pause_on_runout ? 'Enabled' : 'Disabled'}</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">Sensor Enabled:</span>
+                      <p class="text-accent">{settings().enabled ? 'Enabled' : 'Disabled'}</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">Pause Verification:</span>
+                      <p class="text-accent">{settings().pause_verification_timeout_ms}ms ({(settings().pause_verification_timeout_ms / 1000).toFixed(1)}s)</p>
+                    </div>
+                    <div>
+                      <span class="font-semibold">Max Pause Retries:</span>
+                      <p class="text-accent font-bold">{settings().max_pause_retries}</p>
+                    </div>
+                  </div>
+
+                </div>
+                <div class="mt-4 text-xs text-base-content/70 text-center">
+                  Settings are refreshed every 10 seconds
                 </div>
               </div>
             </div>

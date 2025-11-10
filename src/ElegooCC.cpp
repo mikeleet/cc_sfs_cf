@@ -228,11 +228,14 @@ void ElegooCC::handleStatus(JsonDocument &doc)
 
 void ElegooCC::pausePrint()
 {
+    // Reset retry counter for new pause attempt
+    pauseRetryCount = 0;
+    
     sendCommand(SDCP_COMMAND_PAUSE_PRINT, true);
     // Set pause verification state
     pauseCommandSent = true;
     pauseCommandSentTime = millis();
-    logger.logf("Pause command sent, retry count: %d", pauseRetryCount);
+    logger.logf("Pause command sent, retry count reset to: %d", pauseRetryCount);
 }
 
 void ElegooCC::continuePrint()
@@ -502,14 +505,14 @@ void ElegooCC::checkPauseVerification(unsigned long currentTime)
     }
 
     // Check if pause verification has timed out
-    if (currentTime - pauseCommandSentTime >= PAUSE_VERIFICATION_TIMEOUT_MS)
+    if (currentTime - pauseCommandSentTime >= settingsManager.getPauseVerificationTimeoutMs())
     {
         logger.logf("Pause verification timeout - printer still in status: %d", printStatus);
         
-        if (pauseRetryCount < MAX_PAUSE_RETRIES)
+        if (pauseRetryCount < settingsManager.getMaxPauseRetries())
         {
             pauseRetryCount++;
-            logger.logf("Retrying pause command (attempt %d/%d)", pauseRetryCount, MAX_PAUSE_RETRIES);
+            logger.logf("Retrying pause command (attempt %d/%d)", pauseRetryCount, settingsManager.getMaxPauseRetries());
             
             // Reset pause command state to allow retry
             pauseCommandSent = false;
@@ -518,7 +521,7 @@ void ElegooCC::checkPauseVerification(unsigned long currentTime)
         }
         else
         {
-            logger.logf("Max pause retries (%d) exceeded, giving up", MAX_PAUSE_RETRIES);
+            logger.logf("Max pause retries (%d) exceeded, giving up", settingsManager.getMaxPauseRetries());
             resetPauseState();
         }
     }
