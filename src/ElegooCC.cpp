@@ -4,11 +4,15 @@
 
 #include "Logger.h"
 #include "SettingsManager.h"
+#include "PauseAttemptData.h"
 
 #define ACK_TIMEOUT_MS 5000
 
 // External function to get current time (from main.cpp)
 extern unsigned long getTime();
+
+// External pause attempt data (from main.cpp)
+extern PauseAttemptData* pauseAttemptData;
 
 ElegooCC &ElegooCC::getInstance()
 {
@@ -228,8 +232,27 @@ void ElegooCC::handleStatus(JsonDocument &doc)
 
 void ElegooCC::pausePrint()
 {
+    // Check if printer is already in a paused or idle state
+    if (printStatus == SDCP_PRINT_STATUS_PAUSED || 
+        printStatus == SDCP_PRINT_STATUS_PAUSING ||
+        printStatus == SDCP_PRINT_STATUS_IDLE)
+    {
+        logger.logf("Printer already in pause/idle state (status: %d), no pause command needed", printStatus);
+        
+        // Track attempt when printer is already paused
+        if (pauseAttemptData) {
+            pauseAttemptData->addAttempt(PAUSE_ATTEMPT_ALREADY_PAUSED, 0, printStatus);
+        }
+        return;
+    }
+    
     // Reset retry counter for new pause attempt
     pauseRetryCount = 0;
+    
+    // Track initial pause attempt
+    if (pauseAttemptData) {
+        pauseAttemptData->addAttempt(PAUSE_ATTEMPT_INITIAL, pauseRetryCount, printStatus);
+    }
     
     sendCommand(SDCP_COMMAND_PAUSE_PRINT, true);
     // Set pause verification state
@@ -497,9 +520,18 @@ void ElegooCC::checkPauseVerification(unsigned long currentTime)
     }
 
     // Check if printer has successfully paused
-    if (printStatus == SDCP_PRINT_STATUS_PAUSED || printStatus == SDCP_PRINT_STATUS_PAUSING)
+    // Accept PAUSED, PAUSING, or IDLE as successful pause states
+    if (printStatus == SDCP_PRINT_STATUS_PAUSED || 
+        printStatus == SDCP_PRINT_STATUS_PAUSING ||
+        printStatus == SDCP_PRINT_STATUS_IDLE)
     {
         logger.logf("Pause verification successful - printer status: %d", printStatus);
+        
+        // Track successful pause
+        if (pauseAttemptData) {
+            pauseAttemptData->addAttempt(PAUSE_ATTEMPT_SUCCESS, pauseRetryCount, printStatus);
+        }
+        
         resetPauseState();
         return;
     }
@@ -514,6 +546,11 @@ void ElegooCC::checkPauseVerification(unsigned long currentTime)
             pauseRetryCount++;
             logger.logf("Retrying pause command (attempt %d/%d)", pauseRetryCount, settingsManager.getMaxPauseRetries());
             
+            // Track retry attempt
+            if (pauseAttemptData) {
+                pauseAttemptData->addAttempt(PAUSE_ATTEMPT_RETRY, pauseRetryCount, printStatus);
+            }
+            
             // Reset pause command state to allow retry
             pauseCommandSent = false;
             
@@ -522,6 +559,12 @@ void ElegooCC::checkPauseVerification(unsigned long currentTime)
         else
         {
             logger.logf("Max pause retries (%d) exceeded, giving up", settingsManager.getMaxPauseRetries());
+            
+            // Track max retries exceeded
+            if (pauseAttemptData) {
+                pauseAttemptData->addAttempt(PAUSE_ATTEMPT_MAX_EXCEEDED, pauseRetryCount, printStatus);
+            }
+            
             resetPauseState();
         }
     }

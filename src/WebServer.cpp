@@ -6,6 +6,7 @@
 #include "Logger.h"
 #include "EmbeddedWebUI.h"
 #include "TimeSeriesData.h"
+#include "PauseAttemptData.h"
 
 #define SPIFFS LittleFS
 
@@ -21,6 +22,7 @@ extern String getUptimeFormatted();
 extern TimeSeriesData* movementData;
 extern TimeSeriesData* runoutData;
 extern TimeSeriesData* connectionData;
+extern PauseAttemptData* pauseAttemptData;
 
 WebServer::WebServer(int port) : server(port) {}
 
@@ -88,21 +90,37 @@ void WebServer::begin()
                   DynamicJsonDocument doc(1024);
                   
                   // Memory information
-                  doc["memory"]["total_bytes"] = ESP.getHeapSize();
-                  doc["memory"]["free_bytes"] = ESP.getFreeHeap();
-                  doc["memory"]["used_bytes"] = ESP.getHeapSize() - ESP.getFreeHeap();
-                  doc["memory"]["usage_percent"] = (int)((float)(ESP.getHeapSize() - ESP.getFreeHeap()) / ESP.getHeapSize() * 100);
-                  doc["memory"]["largest_free_block"] = ESP.getMaxAllocHeap();
+                  size_t totalHeap = ESP.getHeapSize();
+                  size_t freeHeap = ESP.getFreeHeap();
+                  size_t usedHeap = totalHeap - freeHeap;
+                  
+                  doc["memory"]["total_bytes"] = totalHeap;
+                  doc["memory"]["free_bytes"] = freeHeap;
+                  doc["memory"]["used_bytes"] = usedHeap;
+                  doc["memory"]["total_kb"] = totalHeap / 1024;
+                  doc["memory"]["free_kb"] = freeHeap / 1024;
+                  doc["memory"]["used_kb"] = usedHeap / 1024;
+                  doc["memory"]["usage_percent"] = (int)((float)usedHeap / totalHeap * 100);
+                  doc["memory"]["largest_free_block_kb"] = ESP.getMaxAllocHeap() / 1024;
                   
                   // CPU information
                   doc["cpu"]["frequency_mhz"] = ESP.getCpuFreqMHz();
                   doc["cpu"]["cores"] = ESP.getChipCores();
+                  // Note: ESP32 doesn't provide real-time CPU usage, but we can show task count
+                  doc["cpu"]["usage_note"] = "Real-time CPU usage not available on ESP32";
                   
                   // Flash information
-                  doc["flash"]["total_bytes"] = ESP.getFlashChipSize();
-                  doc["flash"]["used_bytes"] = ESP.getSketchSize();
-                  doc["flash"]["free_bytes"] = ESP.getFreeSketchSpace();
-                  doc["flash"]["usage_percent"] = (int)((float)ESP.getSketchSize() / ESP.getFlashChipSize() * 100);
+                  size_t totalFlash = ESP.getFlashChipSize();
+                  size_t usedFlash = ESP.getSketchSize();
+                  size_t freeFlash = ESP.getFreeSketchSpace();
+                  
+                  doc["flash"]["total_bytes"] = totalFlash;
+                  doc["flash"]["used_bytes"] = usedFlash;
+                  doc["flash"]["free_bytes"] = freeFlash;
+                  doc["flash"]["total_kb"] = totalFlash / 1024;
+                  doc["flash"]["used_kb"] = usedFlash / 1024;
+                  doc["flash"]["free_kb"] = freeFlash / 1024;
+                  doc["flash"]["usage_percent"] = (int)((float)usedFlash / totalFlash * 100);
                   
                   // Uptime information
                   unsigned long uptimeSeconds = millis() / 1000;
@@ -122,7 +140,11 @@ void WebServer::begin()
                   doc["uptime"]["formatted"] = uptimeFormatted;
                   
                   // WiFi information
+                  doc["wifi"]["ssid"] = WiFi.SSID();
                   doc["wifi"]["rssi"] = WiFi.RSSI();
+                  doc["wifi"]["ip_address"] = WiFi.localIP().toString();
+                  doc["wifi"]["mac_address"] = WiFi.macAddress();
+                  
                   int rssi = WiFi.RSSI();
                   String signalStrength = "Unknown";
                   if (rssi > -50) signalStrength = "Excellent";
@@ -242,18 +264,21 @@ void WebServer::begin()
                   size_t movementSize = movementData ? movementData->getDataSize() : 0;
                   size_t runoutSize = runoutData ? runoutData->getDataSize() : 0;
                   size_t connectionSize = connectionData ? connectionData->getDataSize() : 0;
-                  size_t totalTimeseriesSize = movementSize + runoutSize + connectionSize;
+                  size_t pauseAttemptSize = pauseAttemptData ? pauseAttemptData->getDataSize() : 0;
+                  size_t totalTimeseriesSize = movementSize + runoutSize + connectionSize + pauseAttemptSize;
                   
                   jsonDoc["timeseries"]["movement_kb"] = movementSize / 1024;
                   jsonDoc["timeseries"]["runout_kb"] = runoutSize / 1024;
                   jsonDoc["timeseries"]["connection_kb"] = connectionSize / 1024;
+                  jsonDoc["timeseries"]["pause_attempts_kb"] = pauseAttemptSize / 1024;
                   jsonDoc["timeseries"]["total_kb"] = totalTimeseriesSize / 1024;
-                  jsonDoc["timeseries"]["limit_kb"] = 450; // 150KB * 3
-                  jsonDoc["timeseries"]["usage_percent"] = (totalTimeseriesSize * 100) / (450 * 1024);
+                  jsonDoc["timeseries"]["limit_kb"] = 500; // 150KB * 3 + 50KB for pause attempts
+                  jsonDoc["timeseries"]["usage_percent"] = (totalTimeseriesSize * 100) / (500 * 1024);
                   
                   jsonDoc["timeseries"]["movement_points"] = movementData ? movementData->getPointCount() : 0;
                   jsonDoc["timeseries"]["runout_points"] = runoutData ? runoutData->getPointCount() : 0;
                   jsonDoc["timeseries"]["connection_points"] = connectionData ? connectionData->getPointCount() : 0;
+                  jsonDoc["timeseries"]["pause_attempt_points"] = pauseAttemptData ? pauseAttemptData->getPointCount() : 0;
 
                   String jsonResponse;
                   serializeJson(jsonDoc, jsonResponse);
@@ -413,6 +438,28 @@ void WebServer::begin()
                   }
               });
 
+    server.on("/api/timeseries/pause_attempts", HTTP_GET,
+              [](AsyncWebServerRequest *request)
+              {
+                  if (pauseAttemptData) {
+                      String data = pauseAttemptData->getDataAsJSON(100);
+                      request->send(200, "application/json", data);
+                  } else {
+                      request->send(500, "application/json", "{\"error\":\"Pause attempt data not initialized\"}");
+                  }
+              });
+
+    server.on("/api/timeseries/pause_attempts/stats", HTTP_GET,
+              [](AsyncWebServerRequest *request)
+              {
+                  if (pauseAttemptData) {
+                      String stats = pauseAttemptData->getStatistics();
+                      request->send(200, "application/json", stats);
+                  } else {
+                      request->send(500, "application/json", "{\"error\":\"Pause attempt data not initialized\"}");
+                  }
+              });
+
     // Clear timeseries data endpoints
     server.on("/api/timeseries/clear", HTTP_POST,
               [](AsyncWebServerRequest *request)
@@ -420,6 +467,7 @@ void WebServer::begin()
                   if (movementData) movementData->clearData();
                   if (runoutData) runoutData->clearData();
                   if (connectionData) connectionData->clearData();
+                  if (pauseAttemptData) pauseAttemptData->clearData();
                   request->send(200, "text/plain", "All timeseries data cleared");
               });
 

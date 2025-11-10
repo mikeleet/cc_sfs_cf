@@ -10,6 +10,7 @@
 #include "improv.h"
 #include "time.h"
 #include "TimeSeriesData.h"
+#include "PauseAttemptData.h"
 
 #define SPIFFS LittleFS
 
@@ -54,10 +55,11 @@ bool isNtpSetup       = false;
 unsigned long uptimeStartMillis = 0;
 bool uptimeStarted = false;
 
-// Timeseries data storage (150KB each)
+// Timeseries data storage (150KB each, except pause attempts which is 50KB)
 TimeSeriesData* movementData = nullptr;
 TimeSeriesData* runoutData = nullptr;
 TimeSeriesData* connectionData = nullptr;
+PauseAttemptData* pauseAttemptData = nullptr;
 
 // Forward declaration
 unsigned long getTime();
@@ -325,6 +327,7 @@ void setup()
     movementData = new TimeSeriesData("/movement_data.json");
     runoutData = new TimeSeriesData("/runout_data.json");
     connectionData = new TimeSeriesData("/connection_data.json");
+    pauseAttemptData = new PauseAttemptData("/pause_attempt_data.json");
     logger.log("Timeseries data storage initialized");
 }
 

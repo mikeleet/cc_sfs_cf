@@ -248,4 +248,4 @@
  .pio/libdeps/esp32-s3-dev/UUID/UUID.h src/Logger.h \
  /Users/mike/.platformio/packages/framework-arduinoespressif32/libraries/LittleFS/src/LittleFS.h \
  /Users/mike/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h \
- src/SettingsManager.h
+ src/SettingsManager.h src/PauseAttemptData.h

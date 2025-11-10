@@ -12,12 +12,14 @@ interface StorageInfo {
     movement_kb: number
     runout_kb: number
     connection_kb: number
+    pause_attempts_kb: number
     total_kb: number
     limit_kb: number
     usage_percent: number
     movement_points: number
     runout_points: number
     connection_points: number
+    pause_attempt_points: number
   }
 }
 
@@ -181,6 +183,9 @@ function SystemHealth() {
                   <div class="flex justify-between">
                     <span>Cores:</span>
                     <span>{systemHealth()!.cpu.cores}</span>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-2">
+                    Note: Real-time CPU usage monitoring not available on ESP32
                   </div>
                 </div>
               </div>
@@ -352,7 +357,8 @@ function SystemHealth() {
                   <div class="text-xs text-gray-500 mt-2">
                     Movement: {storageInfo()!.timeseries.movement_points} points ({storageInfo()!.timeseries.movement_kb} KB)<br/>
                     Runout: {storageInfo()!.timeseries.runout_points} points ({storageInfo()!.timeseries.runout_kb} KB)<br/>
-                    Connection: {storageInfo()!.timeseries.connection_points} points ({storageInfo()!.timeseries.connection_kb} KB)
+                    Connection: {storageInfo()!.timeseries.connection_points} points ({storageInfo()!.timeseries.connection_kb} KB)<br/>
+                    Pause Attempts: {storageInfo()!.timeseries.pause_attempt_points} points ({storageInfo()!.timeseries.pause_attempts_kb} KB)
                   </div>
                 </div>
               </div>
@@ -381,7 +387,12 @@ function SystemHealth() {
                   <div class="stat">
                     <div class="stat-title">Timeseries Data</div>
                     <div class="stat-value text-lg">{storageInfo()!.timeseries.total_kb} KB</div>
-                    <div class="stat-desc">Auto-rotated at 450KB</div>
+                    <div class="stat-desc">Auto-rotated at 500KB</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-title">Pause Attempts</div>
+                    <div class="stat-value text-lg">{storageInfo()!.timeseries.pause_attempts_kb} KB</div>
+                    <div class="stat-desc">Limited to 50KB</div>
                   </div>
                 </div>
               </div>

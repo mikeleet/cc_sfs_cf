@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup } from 'solid-js'
 import TimeSeriesChart from './TimeSeriesChart'
+import PauseAttemptChart from './PauseAttemptChart'
 
 
 
@@ -210,15 +211,19 @@ function Status() {
               />
             </div>
             
-            <div class="flex justify-center">
-              <div class="w-full lg:w-1/2">
-                <TimeSeriesChart
-                  title="🔗 Printer Connection"
-                  endpoint="/api/timeseries/connection"
-                  color="#3b82f6"
-                  yLabel="Connected"
-                />
-              </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <TimeSeriesChart
+                title="🔗 Printer Connection"
+                endpoint="/api/timeseries/connection"
+                color="#3b82f6"
+                yLabel="Connected"
+              />
+              
+              <PauseAttemptChart
+                title="⏸️ Pause Attempts"
+                endpoint="/api/timeseries/pause_attempts"
+                statsEndpoint="/api/timeseries/pause_attempts/stats"
+              />
             </div>
           </div>
 
