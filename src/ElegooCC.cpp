@@ -391,6 +391,14 @@ void ElegooCC::checkFilamentRunout(unsigned long currentTime)
 void ElegooCC::checkFilamentMovement(unsigned long currentTime)
 {
     int currentMovementValue = digitalRead(MOVEMENT_SENSOR_PIN);
+    
+    // Debug logging every 10 seconds to help troubleshoot movement sensor
+    static unsigned long lastDebugTime = 0;
+    if (currentTime - lastDebugTime >= 10000) {
+        logger.logf("Movement sensor debug - Pin %d value: %d, Last change: %dms ago", 
+                   MOVEMENT_SENSOR_PIN, currentMovementValue, currentTime - lastChangeTime);
+        lastDebugTime = currentTime;
+    }
 
     // CurrentLayer is unreliable when using Orcaslicer 2.3.0, because it is missing some g-code,so
     // we use Z instead. , assuming first layer is at Z offset <  0.1

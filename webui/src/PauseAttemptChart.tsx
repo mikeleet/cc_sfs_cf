@@ -49,21 +49,21 @@ function PauseAttemptChart(props: Props) {
   const fetchData = async () => {
     try {
       setError(null)
-      
+
       // Fetch chart data
       const dataResponse = await fetch(props.endpoint)
       if (dataResponse.ok) {
         const result = await dataResponse.json()
         setData(result.data || [])
       }
-      
+
       // Fetch statistics
       const statsResponse = await fetch(props.statsEndpoint)
       if (statsResponse.ok) {
         const statsResult = await statsResponse.json()
         setStats(statsResult)
       }
-      
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data')
     } finally {
@@ -74,7 +74,7 @@ function PauseAttemptChart(props: Props) {
   onMount(() => {
     fetchData()
     const interval = setInterval(fetchData, 30000) // Refresh every 30 seconds
-    
+
     onCleanup(() => {
       clearInterval(interval)
     })
@@ -88,19 +88,19 @@ function PauseAttemptChart(props: Props) {
     <div class="card bg-base-100 shadow-xl">
       <div class="card-body">
         <h3 class="card-title text-lg">{props.title}</h3>
-        
+
         {loading() && (
           <div class="flex justify-center py-8">
             <span class="loading loading-spinner loading-lg"></span>
           </div>
         )}
-        
+
         {error() && (
           <div class="alert alert-error">
             <span>Error: {error()}</span>
           </div>
         )}
-        
+
         {!loading() && !error() && (
           <div>
             {/* Statistics Summary */}
@@ -132,7 +132,7 @@ function PauseAttemptChart(props: Props) {
                 </div>
               </div>
             )}
-            
+
             {/* Recent Events */}
             <div class="max-h-48 overflow-y-auto">
               <h4 class="font-semibold mb-2">Recent Pause Attempts</h4>
@@ -141,12 +141,12 @@ function PauseAttemptChart(props: Props) {
               ) : (
                 <div class="space-y-1">
                   {data().slice(-10).reverse().map((point) => (
-                    <div 
+                    <div
                       class="flex items-center justify-between p-2 rounded text-xs"
                       style={`background-color: ${PAUSE_ATTEMPT_COLORS[point.type as keyof typeof PAUSE_ATTEMPT_COLORS]}20`}
                     >
                       <div class="flex items-center gap-2">
-                        <div 
+                        <div
                           class="w-2 h-2 rounded-full"
                           style={`background-color: ${PAUSE_ATTEMPT_COLORS[point.type as keyof typeof PAUSE_ATTEMPT_COLORS]}`}
                         ></div>
@@ -165,13 +165,13 @@ function PauseAttemptChart(props: Props) {
                 </div>
               )}
             </div>
-            
+
             {/* Legend */}
             <div class="mt-4 pt-2 border-t">
               <div class="flex flex-wrap gap-2 text-xs">
                 {Object.entries(PAUSE_ATTEMPT_TYPES).map(([type, label]) => (
                   <div class="flex items-center gap-1">
-                    <div 
+                    <div
                       class="w-2 h-2 rounded-full"
                       style={`background-color: ${PAUSE_ATTEMPT_COLORS[parseInt(type) as keyof typeof PAUSE_ATTEMPT_COLORS]}`}
                     ></div>

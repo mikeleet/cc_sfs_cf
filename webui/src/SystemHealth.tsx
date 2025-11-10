@@ -97,7 +97,7 @@ function SystemHealth() {
     if (!confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
       return
     }
-    
+
     try {
       const response = await fetch('/logs/clear', { method: 'POST' })
       if (!response.ok) {
@@ -116,8 +116,8 @@ function SystemHealth() {
     <div class="space-y-6">
       <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold">System Health</h2>
-        <button 
-          class="btn btn-primary btn-sm" 
+        <button
+          class="btn btn-primary btn-sm"
           onClick={fetchAllData}
           disabled={loading()}
         >
@@ -159,8 +159,8 @@ function SystemHealth() {
                     <span>{systemHealth()!.memory.free_kb} KB</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      class="bg-blue-600 h-2.5 rounded-full" 
+                    <div
+                      class="bg-blue-600 h-2.5 rounded-full"
                       style={`width: ${systemHealth()!.memory.usage_percent}%`}
                     ></div>
                   </div>
@@ -209,8 +209,8 @@ function SystemHealth() {
                     <span>{systemHealth()!.flash.free_kb} KB</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      class="bg-green-600 h-2.5 rounded-full" 
+                    <div
+                      class="bg-green-600 h-2.5 rounded-full"
                       style={`width: ${systemHealth()!.flash.usage_percent}%`}
                     ></div>
                   </div>
@@ -286,8 +286,8 @@ function SystemHealth() {
                     <span>{storageInfo()!.free_kb} KB</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      class="bg-blue-600 h-2.5 rounded-full" 
+                    <div
+                      class="bg-blue-600 h-2.5 rounded-full"
                       style={`width: ${storageInfo()!.usage_percent}%`}
                     ></div>
                   </div>
@@ -316,8 +316,8 @@ function SystemHealth() {
                     <span>{storageInfo()!.log_limit_kb - storageInfo()!.log_usage_kb} KB</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      class="bg-yellow-600 h-2.5 rounded-full" 
+                    <div
+                      class="bg-yellow-600 h-2.5 rounded-full"
                       style={`width: ${storageInfo()!.log_usage_percent}%`}
                     ></div>
                   </div>
@@ -346,8 +346,8 @@ function SystemHealth() {
                     <span>{storageInfo()!.timeseries.limit_kb - storageInfo()!.timeseries.total_kb} KB</span>
                   </div>
                   <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div 
-                      class="bg-green-600 h-2.5 rounded-full" 
+                    <div
+                      class="bg-green-600 h-2.5 rounded-full"
                       style={`width: ${storageInfo()!.timeseries.usage_percent}%`}
                     ></div>
                   </div>
@@ -355,9 +355,9 @@ function SystemHealth() {
                     Usage: {storageInfo()!.timeseries.usage_percent}%
                   </div>
                   <div class="text-xs text-gray-500 mt-2">
-                    Movement: {storageInfo()!.timeseries.movement_points} points ({storageInfo()!.timeseries.movement_kb} KB)<br/>
-                    Runout: {storageInfo()!.timeseries.runout_points} points ({storageInfo()!.timeseries.runout_kb} KB)<br/>
-                    Connection: {storageInfo()!.timeseries.connection_points} points ({storageInfo()!.timeseries.connection_kb} KB)<br/>
+                    Movement: {storageInfo()!.timeseries.movement_points} points ({storageInfo()!.timeseries.movement_kb} KB)<br />
+                    Runout: {storageInfo()!.timeseries.runout_points} points ({storageInfo()!.timeseries.runout_kb} KB)<br />
+                    Connection: {storageInfo()!.timeseries.connection_points} points ({storageInfo()!.timeseries.connection_kb} KB)<br />
                     Pause Attempts: {storageInfo()!.timeseries.pause_attempt_points} points ({storageInfo()!.timeseries.pause_attempts_kb} KB)
                   </div>
                 </div>
@@ -403,14 +403,14 @@ function SystemHealth() {
               <div class="card-body">
                 <h3 class="card-title text-lg">🔧 Storage Actions</h3>
                 <div class="flex gap-4 flex-wrap">
-                  <button 
-                    class="btn btn-error" 
+                  <button
+                    class="btn btn-error"
                     onClick={clearLogs}
                   >
                     Clear All Logs
                   </button>
-                  <button 
-                    class="btn btn-primary" 
+                  <button
+                    class="btn btn-primary"
                     onClick={fetchAllData}
                     disabled={loading()}
                   >
