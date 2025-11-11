@@ -109,7 +109,7 @@ int Logger::getLogCount()
 
 void Logger::writeLogToFile(const String &timestamp, const String &message)
 {
-  // Check if we need to rotate the log file
+  // Check if we need to rotate the log file when it exceeds the limit
   if (getLogFileSize() > MAX_LOG_FILE_SIZE)
   {
     rotateLogFile();
@@ -127,19 +127,11 @@ void Logger::writeLogToFile(const String &timestamp, const String &message)
 
 void Logger::rotateLogFile()
 {
-  // Create backup file name
-  String backupPath = String(LOG_FILE_PATH) + ".old";
-  
-  // Remove old backup if it exists
-  if (LittleFS.exists(backupPath))
-  {
-    LittleFS.remove(backupPath);
-  }
-  
-  // Rename current log to backup
+  // Simply delete the current log file when it exceeds the limit
+  // No backup file to save storage space
   if (LittleFS.exists(LOG_FILE_PATH))
   {
-    LittleFS.rename(LOG_FILE_PATH, backupPath);
+    LittleFS.remove(LOG_FILE_PATH);
   }
 }
 
@@ -176,21 +168,7 @@ String Logger::getLogFileContents()
 {
   String contents = "";
   
-  // Read backup file first (older logs)
-  String backupPath = String(LOG_FILE_PATH) + ".old";
-  if (LittleFS.exists(backupPath))
-  {
-    File backupFile = LittleFS.open(backupPath, "r");
-    if (backupFile)
-    {
-      contents += "=== OLDER LOGS ===\n";
-      contents += backupFile.readString();
-      contents += "\n=== CURRENT LOGS ===\n";
-      backupFile.close();
-    }
-  }
-  
-  // Read current log file
+  // Read current log file only (no backup file)
   File logFile = LittleFS.open(LOG_FILE_PATH, "r");
   if (logFile)
   {
@@ -203,31 +181,15 @@ String Logger::getLogFileContents()
 
 void Logger::clearLogFile()
 {
-  // Remove both current and backup log files
+  // Remove current log file only (no backup file)
   if (LittleFS.exists(LOG_FILE_PATH))
   {
     LittleFS.remove(LOG_FILE_PATH);
-  }
-  
-  String backupPath = String(LOG_FILE_PATH) + ".old";
-  if (LittleFS.exists(backupPath))
-  {
-    LittleFS.remove(backupPath);
   }
 }
 
 size_t Logger::getLogFileUsage()
 {
-  size_t totalSize = getLogFileSize();
-  
-  // Add backup file size
-  String backupPath = String(LOG_FILE_PATH) + ".old";
-  File backupFile = LittleFS.open(backupPath, "r");
-  if (backupFile)
-  {
-    totalSize += backupFile.size();
-    backupFile.close();
-  }
-  
-  return totalSize;
+  // Return only current log file size (no backup file)
+  return getLogFileSize();
 }

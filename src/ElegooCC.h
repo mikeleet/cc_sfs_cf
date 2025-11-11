@@ -131,6 +131,10 @@ class ElegooCC
     unsigned long pauseCommandSentTime;
     int           pauseRetryCount;
 
+    // Test movement stop simulation
+    bool          testMovementStopActive;
+    unsigned long testMovementStopStartTime;
+
     ElegooCC();
 
     // Delete copy constructor and assignment operator
@@ -164,6 +168,7 @@ class ElegooCC
 
     // Print control methods
     void pausePrint();
+    void triggerTestMovementStop();
 
     // Get current printer information
     printer_info_t getCurrentInformation();

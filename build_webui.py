@@ -136,8 +136,12 @@ def build_and_embed_webui(target, source, env):
             print(f"❌ WebUI build failed: {e}")
             print(f"Error output: {e.stderr}")
             os.chdir(project_dir)
+            # CRITICAL: Fail the entire build if WebUI build fails
+            raise Exception(f"WebUI build failed - firmware build cannot continue with outdated WebUI")
         except FileNotFoundError:
             print("❌ npm not found, skipping WebUI build")
+            # CRITICAL: Fail if npm is not available
+            raise Exception("npm not found - cannot build WebUI")
     else:
         print("❌ WebUI directory or package.json not found")
     

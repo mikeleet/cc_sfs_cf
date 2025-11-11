@@ -43,6 +43,16 @@ void TimeSeriesData::addDataPoint(unsigned long timestamp, float value) {
     // Write to file periodically (every 10 points to reduce wear)
     if (totalPoints % 10 == 0) {
         writeDataToFile();
+        
+        // Check if we need to rotate data to stay under size limit
+        if (getDataSize() > MAX_DATA_SIZE) {
+            // If over limit, reduce data points and rewrite
+            if (isCircularBuffer && totalPoints > 500) {
+                // Keep only the most recent 500 points when over size limit
+                totalPoints = 500;
+                writeDataToFile();
+            }
+        }
     }
 }
 

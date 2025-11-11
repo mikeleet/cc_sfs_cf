@@ -211,6 +211,53 @@ void WebServer::begin()
                   request->send(200, "text/plain", logContents);
               });
 
+    // Download logs endpoint (logs as downloadable file)
+    server.on("/logs/download", HTTP_GET,
+              [](AsyncWebServerRequest *request)
+              {
+                  String logContents = logger.getLogFileContents();
+                  
+                  // Debug information if no logs found
+                  if (logContents.length() == 0)
+                  {
+                      logContents = "No historical logs available.\n\n";
+                      logContents += "Debug Information:\n";
+                      logContents += "- Log file path: /system_logs.txt\n";
+                      logContents += "- Log file exists: " + String(LittleFS.exists("/system_logs.txt") ? "Yes" : "No") + "\n";
+                      logContents += "- Log file size: " + String(logger.getLogFileSize()) + " bytes\n";
+                      logContents += "- In-memory log count: " + String(logger.getLogCount()) + "\n";
+                      logContents += "- LittleFS mounted: " + String(LittleFS.begin() ? "Yes" : "No") + "\n";
+                      
+                      // Force a test log entry to see if logging works
+                      logger.log("Test log entry created during download request");
+                      
+                      // Add some recent in-memory logs if available
+                      String recentLogs = logger.getLogsAsJson();
+                      if (recentLogs.length() > 0) {
+                          logContents += "\nRecent in-memory logs (JSON format):\n";
+                          logContents += recentLogs;
+                      }
+                      
+                      // Try to read the file again after forcing a log entry
+                      String testFileContents = logger.getLogFileContents();
+                      if (testFileContents.length() > 0) {
+                          logContents += "\n\nFile contents after test log:\n";
+                          logContents += testFileContents;
+                      }
+                  }
+                  
+                  // Generate filename with current timestamp
+                  time_t now = time(0);
+                  struct tm* timeinfo = localtime(&now);
+                  char filename[64];
+                  strftime(filename, sizeof(filename), "esp32_logs_%Y%m%d_%H%M%S.txt", timeinfo);
+                  
+                  AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", logContents);
+                  response->addHeader("Content-Disposition", String("attachment; filename=\"") + filename + "\"");
+                  response->addHeader("Content-Type", "text/plain");
+                  request->send(response);
+              });
+
     // Clear logs endpoint
     server.on("/logs/clear", HTTP_POST,
               [](AsyncWebServerRequest *request)
@@ -218,6 +265,25 @@ void WebServer::begin()
                   logger.clearLogs();
                   logger.clearLogFile();
                   request->send(200, "text/plain", "All logs cleared");
+              });
+
+    // Clear all storage endpoint (logs + timeseries data)
+    server.on("/storage/clear_all", HTTP_POST,
+              [](AsyncWebServerRequest *request)
+              {
+                  // Clear logs
+                  logger.clearLogs();
+                  logger.clearLogFile();
+                  
+                  // Clear all timeseries data files
+                  if (LittleFS.begin()) {
+                      LittleFS.remove("/movement_data.json");
+                      LittleFS.remove("/runout_data.json");
+                      LittleFS.remove("/connection_data.json");
+                      LittleFS.remove("/pause_attempt_data.json");
+                  }
+                  
+                  request->send(200, "text/plain", "All storage cleared (logs + timeseries data)");
               });
 
     // Version endpoint
@@ -240,10 +306,16 @@ void WebServer::begin()
               [](AsyncWebServerRequest *request)
               {
                   DynamicJsonDocument jsonDoc(512);
-                  
+                  // Basic filesystem info
                   size_t totalBytes = LittleFS.totalBytes();
                   size_t usedBytes = LittleFS.usedBytes();
                   size_t freeBytes = totalBytes - usedBytes;
+                  
+                  // Add filesystem size info for debugging
+                  logger.logf("LittleFS filesystem - Total: %d bytes (%.2f MB), Used: %d bytes (%.2f MB), Free: %d bytes (%.2f MB)", 
+                             totalBytes, totalBytes / (1024.0 * 1024.0), 
+                             usedBytes, usedBytes / (1024.0 * 1024.0),
+                             freeBytes, freeBytes / (1024.0 * 1024.0));
                   size_t logUsage = logger.getLogFileUsage();
                   
                   jsonDoc["total_bytes"] = totalBytes;
@@ -252,13 +324,14 @@ void WebServer::begin()
                   jsonDoc["total_kb"] = totalBytes / 1024;
                   jsonDoc["used_kb"] = usedBytes / 1024;
                   jsonDoc["free_kb"] = freeBytes / 1024;
+                  jsonDoc["total_mb"] = totalBytes / (1024 * 1024);
                   jsonDoc["usage_percent"] = (usedBytes * 100) / totalBytes;
                   
                   // Log file specific info
                   jsonDoc["log_usage_bytes"] = logUsage;
                   jsonDoc["log_usage_kb"] = logUsage / 1024;
-                  jsonDoc["log_limit_kb"] = 200;
-                  jsonDoc["log_usage_percent"] = (logUsage * 100) / (200 * 1024);
+                  jsonDoc["log_limit_kb"] = 1536; // 1.5MB
+                  jsonDoc["log_usage_percent"] = (logUsage * 100) / (1536 * 1024); // 1.5MB
                   
                   // Timeseries data info
                   size_t movementSize = movementData ? movementData->getDataSize() : 0;
@@ -402,6 +475,14 @@ void WebServer::begin()
                   logger.log("Test pause requested via WebUI");
                   elegooCC.pausePrint();
                   request->send(200, "text/plain", "Test pause command sent");
+              });
+
+    server.on("/test_movement_stop", HTTP_POST,
+              [this](AsyncWebServerRequest *request)
+              {
+                  logger.log("Test movement stop requested via WebUI - simulating filament stopped for 10 minutes");
+                  elegooCC.triggerTestMovementStop();
+                  request->send(200, "text/plain", "Test movement stop triggered - filament will appear stopped for 10 minutes");
               });
 
     // Timeseries data endpoints

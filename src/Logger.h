@@ -17,7 +17,7 @@ class Logger
 {
 private:
   static const int MAX_LOG_ENTRIES = 50;
-  static const size_t MAX_LOG_FILE_SIZE = 200 * 1024; // 200KB
+  static const size_t MAX_LOG_FILE_SIZE = 3 * 1024 * 1024; // 3MB
   static const char* LOG_FILE_PATH;
   
   LogEntry logBuffer[MAX_LOG_ENTRIES];
@@ -28,7 +28,6 @@ private:
   void writeLogToFile(const String &timestamp, const String &message);
   void rotateLogFile();
   String formatTimestamp(unsigned long timestamp);
-  size_t getLogFileSize();
 
   Logger();
 
@@ -48,6 +47,7 @@ public:
   void clearLogs();
   void clearLogFile();
   int getLogCount();
+  size_t getLogFileSize();
   size_t getLogFileUsage();
 };
 

@@ -47,6 +47,10 @@ ElegooCC::ElegooCC()
     pauseCommandSentTime = 0;
     pauseRetryCount      = 0;
 
+    // Initialize test movement stop simulation
+    testMovementStopActive = false;
+    testMovementStopStartTime = 0;
+
     // TODO: send a UDP broadcast, M99999 on Port 30000, maybe using AsyncUDP.h and listen for the
     // result. this will give us the printer IP address.
 
@@ -367,8 +371,9 @@ void ElegooCC::loop()
     // Check pause verification and retry if needed
     checkPauseVerification(currentTime);
 
-    // Check if we should pause the print
-    if (shouldPausePrint(currentTime))
+    // Check if we should pause the print (only when there's a pause condition)
+    bool pauseCondition = (filamentRunout && settingsManager.getPauseOnRunout()) || filamentStopped;
+    if (pauseCondition && shouldPausePrint(currentTime))
     {
         logger.log("Pausing print, detected filament runout or stopped");
         pausePrint();
@@ -390,20 +395,40 @@ void ElegooCC::checkFilamentRunout(unsigned long currentTime)
 
 void ElegooCC::checkFilamentMovement(unsigned long currentTime)
 {
-    int currentMovementValue = digitalRead(MOVEMENT_SENSOR_PIN);
-    
-    // Debug logging every 10 seconds to help troubleshoot movement sensor
-    static unsigned long lastDebugTime = 0;
-    if (currentTime - lastDebugTime >= 10000) {
-        logger.logf("Movement sensor debug - Pin %d value: %d, Last change: %dms ago", 
-                   MOVEMENT_SENSOR_PIN, currentMovementValue, currentTime - lastChangeTime);
-        lastDebugTime = currentTime;
+    // Check if test movement stop is active (10 minutes = 600,000ms)
+    if (testMovementStopActive)
+    {
+        if (currentTime - testMovementStopStartTime >= 600000) // 10 minutes
+        {
+            testMovementStopActive = false;
+            logger.log("Test movement stop simulation ended - resuming normal movement detection");
+        }
+        else
+        {
+            // Force filament stopped state during test
+            if (!filamentStopped)
+            {
+                logger.log("Test movement stop: Forcing filament stopped state");
+                filamentStopped = true;
+            }
+            return; // Skip normal movement detection during test
+        }
     }
 
+    int currentMovementValue = digitalRead(MOVEMENT_SENSOR_PIN);
+    
     // CurrentLayer is unreliable when using Orcaslicer 2.3.0, because it is missing some g-code,so
     // we use Z instead. , assuming first layer is at Z offset <  0.1
     int movementTimeout =
         currentZ < 0.1 ? settingsManager.getFirstLayerTimeout() : settingsManager.getTimeout();
+
+    // Debug logging every movement timeout interval to help troubleshoot movement sensor
+    static unsigned long lastDebugTime = 0;
+    if (currentTime - lastDebugTime >= movementTimeout) {
+        logger.logf("Movement sensor debug - Pin %d value: %d, Last change: %dms ago, Timeout: %dms, Test active: %d", 
+                   MOVEMENT_SENSOR_PIN, currentMovementValue, currentTime - lastChangeTime, movementTimeout, testMovementStopActive);
+        lastDebugTime = currentTime;
+    }
 
     // Check if movement sensor value has changed, if the filament is moving, it should change every
     // so often when it changes, reset the timeout
@@ -454,10 +479,46 @@ bool ElegooCC::shouldPausePrint(unsigned long currentTime)
     // Don't pause if we have less than 100t tickets left, the print is probably done
     // Don't pause if we're already in pause verification mode
     // TODO: also add a buffer after pause because sometimes an ack comes before the update
-    if (currentTime - startedAt < settingsManager.getStartPrintTimeout() ||
-        !webSocket.isConnected() || waitingForAck || !isPrinting() ||
-        (totalTicks - currentTicks) < 100 || !pauseCondition || isPauseInProgress())
+    
+    // Debug logging to identify why pause might be blocked
+    bool startTimeoutMet = (currentTime - startedAt) >= settingsManager.getStartPrintTimeout();
+    bool websocketConnected = webSocket.isConnected();
+    bool notWaitingForAck = !waitingForAck;
+    bool printerIsPrinting = isPrinting();
+    bool enoughTicksRemaining = (totalTicks - currentTicks) >= 100;
+    bool pauseConditionMet = pauseCondition;
+    bool notInPauseProgress = !isPauseInProgress();
+    
+    if (!startTimeoutMet || !websocketConnected || !notWaitingForAck || !printerIsPrinting ||
+        !enoughTicksRemaining || !pauseConditionMet || !notInPauseProgress)
     {
+        logger.logf("Pause blocked - StartTimeout:%d WS:%d NotWaitingAck:%d Printing:%d TicksOK:%d PauseCond:%d NotInProgress:%d (Status:%d)",
+                   startTimeoutMet, websocketConnected, notWaitingForAck, printerIsPrinting, 
+                   enoughTicksRemaining, pauseConditionMet, notInPauseProgress, printStatus);
+        
+        // Additional debug for printing state - log every time to identify frequency issue
+        if (!printerIsPrinting) {
+            const char* statusName = "UNKNOWN";
+            switch(printStatus) {
+                case SDCP_PRINT_STATUS_IDLE: statusName = "IDLE"; break;
+                case SDCP_PRINT_STATUS_HOMING: statusName = "HOMING"; break;
+                case SDCP_PRINT_STATUS_DROPPING: statusName = "DROPPING"; break;
+                case SDCP_PRINT_STATUS_EXPOSURING: statusName = "EXPOSURING"; break;
+                case SDCP_PRINT_STATUS_LIFTING: statusName = "LIFTING"; break;
+                case SDCP_PRINT_STATUS_PAUSING: statusName = "PAUSING"; break;
+                case SDCP_PRINT_STATUS_PAUSED: statusName = "PAUSED"; break;
+                case SDCP_PRINT_STATUS_STOPPING: statusName = "STOPPING"; break;
+                case SDCP_PRINT_STATUS_STOPED: statusName = "STOPPED"; break;
+                case SDCP_PRINT_STATUS_COMPLETE: statusName = "COMPLETE"; break;
+                case SDCP_PRINT_STATUS_FILE_CHECKING: statusName = "FILE_CHECKING"; break;
+                case SDCP_PRINT_STATUS_PRINTING: statusName = "PRINTING"; break;
+                case SDCP_PRINT_STATUS_HEATING: statusName = "HEATING"; break;
+                case SDCP_PRINT_STATUS_BED_LEVELING: statusName = "BED_LEVELING"; break;
+            }
+            logger.logf("Printing debug - printStatus:%d (%s) machineStatusMask:0x%X hasMachineStatus(PRINTING):%d", 
+                       printStatus, statusName, machineStatusMask, hasMachineStatus(SDCP_MACHINE_STATUS_PRINTING));
+        }
+        
         return false;
     }
 
@@ -473,10 +534,26 @@ bool ElegooCC::shouldPausePrint(unsigned long currentTime)
     return true;
 }
 
+void ElegooCC::triggerTestMovementStop()
+{
+    testMovementStopActive = true;
+    testMovementStopStartTime = millis();
+    logger.log("Test movement stop activated - simulating filament stopped for 10 minutes");
+}
+
 bool ElegooCC::isPrinting()
 {
-    return printStatus == SDCP_PRINT_STATUS_PRINTING &&
-           hasMachineStatus(SDCP_MACHINE_STATUS_PRINTING);
+    // For FDM printers (Elegoo Carbon Centauri), consider printer as "printing" 
+    // during any active print job status, including preparation phases
+    bool isActivePrintStatus = (
+        printStatus == SDCP_PRINT_STATUS_PRINTING ||      // 13 - Actively printing
+        printStatus == SDCP_PRINT_STATUS_HEATING ||       // 16 - Heating hotend/bed
+        printStatus == SDCP_PRINT_STATUS_BED_LEVELING ||  // 20 - Auto bed leveling
+        printStatus == SDCP_PRINT_STATUS_HOMING          // 1  - Homing axes before print
+    );
+    
+    // Also check machine status if available
+    return isActivePrintStatus && hasMachineStatus(SDCP_MACHINE_STATUS_PRINTING);
 }
 
 // Helper methods for machine status bitmask

@@ -30,6 +30,8 @@ function Status() {
   const [loading, setLoading] = createSignal(true)
   const [testPauseLoading, setTestPauseLoading] = createSignal(false)
   const [testPauseError, setTestPauseError] = createSignal('')
+  const [testMovementStopLoading, setTestMovementStopLoading] = createSignal(false)
+  const [testMovementStopError, setTestMovementStopError] = createSignal('')
   const [sensorStatus, setSensorStatus] = createSignal({
     stopped: false,
     filamentRunout: false,
@@ -102,6 +104,28 @@ function Status() {
       console.error('Failed to send test pause:', err)
     } finally {
       setTestPauseLoading(false)
+    }
+  }
+
+  const handleTestMovementStop = async () => {
+    try {
+      setTestMovementStopLoading(true)
+      setTestMovementStopError('')
+
+      const response = await fetch('/test_movement_stop', {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to trigger test movement stop: ${response.status} ${response.statusText}`)
+      }
+
+      console.log('Test movement stop triggered successfully - will simulate stopped filament for 10 minutes')
+    } catch (err: any) {
+      setTestMovementStopError(`Error triggering test movement stop: ${err.message || 'Unknown error'}`)
+      console.error('Failed to trigger test movement stop:', err)
+    } finally {
+      setTestMovementStopLoading(false)
     }
   }
 
@@ -312,21 +336,49 @@ function Status() {
                     {testPauseError()}
                   </div>
                 )}
+
+                {testMovementStopError() && (
+                  <div role="alert" class="mb-4 alert alert-error">
+                    {testMovementStopError()}
+                  </div>
+                )}
                 
-                <button
-                  class="btn btn-warning"
-                  onClick={handleTestPause}
-                  disabled={testPauseLoading()}
-                >
-                  {testPauseLoading() ? (
-                    <>
-                      <span class="loading loading-spinner loading-sm"></span>
-                      Sending Test Pause...
-                    </>
-                  ) : (
-                    'Test Pause Function'
-                  )}
-                </button>
+                <div class="flex gap-4 flex-wrap">
+                  <button
+                    class="btn btn-warning"
+                    onClick={handleTestPause}
+                    disabled={testPauseLoading()}
+                  >
+                    {testPauseLoading() ? (
+                      <>
+                        <span class="loading loading-spinner loading-sm"></span>
+                        Sending Test Pause...
+                      </>
+                    ) : (
+                      'Test Pause Function'
+                    )}
+                  </button>
+
+                  <button
+                    class="btn btn-error"
+                    onClick={handleTestMovementStop}
+                    disabled={testMovementStopLoading()}
+                  >
+                    {testMovementStopLoading() ? (
+                      <>
+                        <span class="loading loading-spinner loading-sm"></span>
+                        Triggering Movement Stop...
+                      </>
+                    ) : (
+                      'Test Movement Stop (10min)'
+                    )}
+                  </button>
+                </div>
+
+                <div class="mt-4 text-xs text-base-content/70">
+                  <p><strong>Test Pause:</strong> Directly sends pause command to printer</p>
+                  <p><strong>Test Movement Stop:</strong> Simulates filament stopped moving for 10 minutes, triggering automatic pause logic</p>
+                </div>
               </div>
             </div>
           </div>
